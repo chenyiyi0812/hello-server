@@ -15,8 +15,8 @@ public class AuthInterceptor implements HandlerInterceptor {
         String uri = request.getRequestURI();
 
         // 2. 手写细粒度放行规则
-        // 规则 A：POST /api/users → 允许用户注册（放行）
-        boolean isCreateUser = "POST".equalsIgnoreCase(method) && "/api/users".equals(uri);
+        // 规则 A：POST /api/users/register → 允许用户注册（放行）
+        boolean isCreateUser = "POST".equalsIgnoreCase(method) && "/api/users/register".equals(uri);
         // 规则 B：POST /api/users/login → 允许用户登录（放行）
         boolean isLogin = "POST".equalsIgnoreCase(method) && "/api/users/login".equals(uri);
 

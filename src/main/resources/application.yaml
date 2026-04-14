@@ -4,13 +4,17 @@ spring:
     username: postgres
     password: 123456
     driver-class-name: org.postgresql.Driver
+  sql:
+    init:
+      schema-locations: classpath:schema.sql
+      mode: always
   h2:
     console:
       enabled: false
 
 server:
-  port: 8081
+  port: 8082
 
 mybatis-plus:
   configuration:
-    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

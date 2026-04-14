@@ -2,24 +2,24 @@ package com.example.demo.common;
 
 public enum ResultCode {
     SUCCESS(200, "操作成功"),
-    FAILED(500, "操作失败"),
-    USER_HAS_EXISTED(4001, "该用户名已被注册"),
-    USER_NOT_EXIST(4002, "该用户不存在"),
-    PASSWORD_ERROR(4003, "账号或密码错误");
+    USER_HAS_EXISTED(400, "用户已存在"),
+    USER_NOT_EXIST(404, "用户不存在"),
+    PASSWORD_ERROR(401, "密码错误"),
+    OPERATION_FAILED(500, "操作失败");
 
     private int code;
-    private String msg;
+    private String message;
 
-    ResultCode(int code, String msg) {
+    ResultCode(int code, String message) {
         this.code = code;
-        this.msg = msg;
+        this.message = message;
     }
 
     public int getCode() {
         return code;
     }
 
-    public String getMsg() {
-        return msg;
+    public String getMessage() {
+        return message;
     }
 }
