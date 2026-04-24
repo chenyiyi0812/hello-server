@@ -4,6 +4,7 @@ import com.example.demo.dto.UserDTO;
 import com.example.demo.service.UserService;
 import com.example.demo.common.Result;
 import com.example.demo.vo.UserDetailVO;
+import com.example.demo.entity.UserInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,8 +37,22 @@ public class UserController {
         return userService.getUserPage(pageNum, pageSize);
     }
 
-    @GetMapping("/detail/{userId}")
-    public Result<UserDetailVO> getUserDetail(@PathVariable Long userId) {
+    // 5. 查询用户详情（多表联查 + Redis）
+    @GetMapping("/{id}/detail")
+    public Result<UserDetailVO> getUserDetail(@PathVariable("id") Long userId) {
         return userService.getUserDetail(userId);
+    }
+
+    // 6. 更新用户扩展信息
+    @PutMapping("/{id}/detail")
+    public Result<String> updateUserInfo(@PathVariable("id") Long userId, @RequestBody UserInfo userInfo) {
+        userInfo.setUserId(userId);
+        return userService.updateUserInfo(userInfo);
+    }
+
+    // 7. 删除用户
+    @DeleteMapping("/{id}")
+    public Result<String> deleteUser(@PathVariable("id") Long userId) {
+        return userService.deleteUser(userId);
     }
 }

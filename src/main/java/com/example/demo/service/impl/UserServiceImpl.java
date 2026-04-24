@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.dto.UserDTO;
 import com.example.demo.entity.User;
+import com.example.demo.entity.UserInfo;
 import com.example.demo.mapper.UserInfoMapper;
 import com.example.demo.mapper.UserMapper;
 import com.example.demo.service.UserService;
@@ -103,11 +104,56 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 3. 写回缓存
         try {
             String userJson = JSONUtil.toJsonStr(userDetail);
-            redisTemplate.opsForValue().set(key, userJson);
+            redisTemplate.opsForValue().set(
+                key,
+                userJson,
+                10,
+                java.util.concurrent.TimeUnit.MINUTES
+            );
         } catch (Exception e) {
             // 缓存写入失败，不影响返回结果
         }
 
         return Result.success(userDetail);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public Result<String> updateUserInfo(UserInfo userInfo) {
+        // 参数校验,userInfo 不能为空，并且 userId 不能为空,后面删除 Redis 缓存时
+        if (userInfo == null || userInfo.getUserId() == null) {
+            return Result.error(400, "参数错误");
+        }
+
+        // 先操作数据库
+        int count = userInfoMapper.updateById(userInfo);
+        if (count == 0) {
+            // 如果更新失败，可能是记录不存在，尝试插入
+            userInfoMapper.insert(userInfo);
+        }
+
+        // 清除缓存
+        String key = CACHE_KEY_PREFIX + userInfo.getUserId();
+        redisTemplate.delete(key);
+
+        return Result.success("更新成功");
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public Result<String> deleteUser(Long userId) {
+        // 先操作数据库
+        userMapper.deleteById(userId);
+        
+        // 删除用户扩展信息
+        com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<UserInfo> queryWrapper = new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+        queryWrapper.eq(UserInfo::getUserId, userId);
+        userInfoMapper.delete(queryWrapper);
+
+        // 清除缓存
+        String key = CACHE_KEY_PREFIX + userId;
+        redisTemplate.delete(key);
+
+        return Result.success("删除成功");
     }
 }

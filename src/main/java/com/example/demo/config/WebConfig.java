@@ -12,7 +12,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new AuthInterceptor())
                 .addPathPatterns("/api/**")
-                // 放行登录接口、分页查询接口和用户详情接口
-                .excludePathPatterns("/api/users/login", "/api/users/page", "/api/users/detail/**");
+                // 放行登录接口、分页查询接口、用户详情接口和删除用户接口
+                .excludePathPatterns("/api/users/login", "/api/users/page", "/api/users/*/detail", "/api/users/*");
     }
 }
