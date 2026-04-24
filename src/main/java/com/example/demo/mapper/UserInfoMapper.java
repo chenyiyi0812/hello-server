@@ -17,6 +17,8 @@ public interface UserInfoMapper extends BaseMapper<UserInfo> {
             "i.address " +
             "FROM sys_user u " +
             "LEFT JOIN user_info i ON u.id = i.user_id " +
-            "WHERE u.id = #{userId}")
+            "WHERE u.id = #{userId} " +
+            "ORDER BY i.id DESC " +
+            "LIMIT 1")
     UserDetailVO getUserDetail(@Param("userId") Long userId);
 }

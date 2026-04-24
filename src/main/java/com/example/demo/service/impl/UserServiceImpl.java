@@ -122,7 +122,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public Result<String> updateUserInfo(UserInfo userInfo) {
         // 参数校验,userInfo 不能为空，并且 userId 不能为空,后面删除 Redis 缓存时
         if (userInfo == null || userInfo.getUserId() == null) {
-            return Result.error(400, "参数错误");
+            return Result.error(ResultCode.OPERATION_FAILED);
         }
 
         // 先操作数据库
