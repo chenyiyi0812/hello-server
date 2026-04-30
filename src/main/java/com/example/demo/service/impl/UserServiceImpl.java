@@ -12,6 +12,7 @@ import com.example.demo.mapper.UserMapper;
 import com.example.demo.service.UserService;
 import com.example.demo.common.Result;
 import com.example.demo.common.ResultCode;
+import com.example.demo.security.JwtUtil;
 import com.example.demo.utils.TokenUtils;
 import com.example.demo.vo.UserDetailVO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private UserInfoMapper userInfoMapper;
     @Autowired
     private StringRedisTemplate redisTemplate;
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @Override
     public Result<String> register(UserDTO userDTO) {
@@ -59,8 +62,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return Result.error(ResultCode.PASSWORD_ERROR);
         }
 
-        String token = TokenUtils.generateToken();
-        return Result.success(token);
+        String jwt = jwtUtil.generateToken(userDTO.getUsername());
+        return Result.success(jwt);
     }
 
     @Override
