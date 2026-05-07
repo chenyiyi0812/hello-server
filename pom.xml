@@ -19,13 +19,18 @@
         <java.version>8</java.version>
     </properties>
 
-    <!-- 阿里云镜像（解决 Connection reset 网络报错） -->
     <repositories>
         <repository>
             <id>aliyunmaven</id>
             <name>Aliyun Maven</name>
             <url>https://maven.aliyun.com/repository/public</url>
             <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
             <snapshots><enabled>false</enabled></snapshots>
         </repository>
     </repositories>
@@ -45,7 +50,6 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- Spring Boot2 专用 MyBatis-Plus -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
@@ -70,16 +74,9 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Redis 依赖 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -88,20 +85,17 @@
             <version>5.8.25</version>
         </dependency>
 
-        <!-- H2 内存数据库 -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Spring Security依赖 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-        <!-- JWT处理库依赖 -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
