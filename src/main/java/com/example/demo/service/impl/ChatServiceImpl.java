@@ -35,13 +35,7 @@ public class ChatServiceImpl implements ChatService {
             historyText = String.join("\n", records);
         }
 
-        String finalPrompt = String.format("""
-                以下是历史对话：
-                %s
-                
-                当前用户问题：
-                %s
-                """, historyText, message);
+        String finalPrompt = String.format("以下是历史对话：\n%s\n\n当前用户问题：\n%s", historyText, message);
 
         String answer = callDashScopeAPI(finalPrompt);
 
