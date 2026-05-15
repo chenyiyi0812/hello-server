@@ -6,6 +6,8 @@ import com.example.demo.service.ChatService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +15,8 @@ import java.util.List;
 
 @Service
 public class ChatServiceImpl implements ChatService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ChatServiceImpl.class);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -28,11 +32,15 @@ public class ChatServiceImpl implements ChatService {
         String message = requestDTO.getMessage();
 
         String redisKey = "chat:session:" + sessionId;
+        logger.info("Processing session: {}, message: {}", sessionId, message);
 
         List<String> records = stringRedisTemplate.opsForList().range(redisKey, 0, -1);
+        logger.info("Found {} history records in Redis", records != null ? records.size() : 0);
+        
         String historyText = "";
         if (records != null && !records.isEmpty()) {
             historyText = String.join("\n", records);
+            logger.info("History text length: {}", historyText.length());
         }
 
         String finalPrompt = String.format("以下是历史对话：\n%s\n\n当前用户问题：\n%s", historyText, message);
@@ -41,10 +49,14 @@ public class ChatServiceImpl implements ChatService {
 
         String recordText = "用户：" + message + "\n助手：" + answer;
         stringRedisTemplate.opsForList().rightPush(redisKey, recordText);
+        logger.info("Saved record to Redis, key: {}", redisKey);
 
         Long size = stringRedisTemplate.opsForList().size(redisKey);
+        logger.info("Current list size: {}", size);
+        
         if (size != null && size > 3) {
             stringRedisTemplate.opsForList().trim(redisKey, size - 3, size - 1);
+            logger.info("Trimmed list to last 3 records");
         }
 
         return new ChatResponseVO(message, answer);
