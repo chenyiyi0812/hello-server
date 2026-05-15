@@ -1,30 +1,25 @@
 package com.example.demo.service.impl;
 
 import com.example.demo.model.dto.ChatRequestDTO;
-import com.example.demo.model.entity.ChatRecord;
 import com.example.demo.model.vo.ChatResponseVO;
 import com.example.demo.service.ChatService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class ChatServiceImpl implements ChatService {
 
-    private static final int MAX_HISTORY_ROUNDS = 3;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final StringRedisTemplate stringRedisTemplate;
 
     public ChatServiceImpl(StringRedisTemplate stringRedisTemplate) {
         this.stringRedisTemplate = stringRedisTemplate;
-        this.objectMapper = new ObjectMapper();
-        this.objectMapper.registerModule(new JavaTimeModule());
     }
 
     @Override
@@ -35,34 +30,27 @@ public class ChatServiceImpl implements ChatService {
         String redisKey = "chat:session:" + sessionId;
 
         List<String> records = stringRedisTemplate.opsForList().range(redisKey, 0, -1);
-        StringBuilder historyText = new StringBuilder();
-
-        int startIndex = records.size() > MAX_HISTORY_ROUNDS ? records.size() - MAX_HISTORY_ROUNDS : 0;
-        for (int i = startIndex; i < records.size(); i++) {
-            String recordJson = records.get(i);
-            try {
-                ChatRecord record = objectMapper.readValue(recordJson, ChatRecord.class);
-                historyText.append("用户: ").append(record.getUserMessage()).append("\n");
-                historyText.append("助手: ").append(record.getAssistantMessage()).append("\n");
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-            }
+        String historyText = "";
+        if (records != null && !records.isEmpty()) {
+            historyText = String.join("\n", records);
         }
 
-        String prompt = historyText + "用户: " + message;
-        String answer = callDashScopeAPI(prompt);
+        String finalPrompt = String.format("""
+                以下是历史对话：
+                %s
+                
+                当前用户问题：
+                %s
+                """, historyText, message);
 
-        ChatRecord newRecord = new ChatRecord();
-        newRecord.setSessionId(sessionId);
-        newRecord.setUserMessage(message);
-        newRecord.setAssistantMessage(answer);
-        newRecord.setCreateTime(LocalDateTime.now());
+        String answer = callDashScopeAPI(finalPrompt);
 
-        try {
-            String recordJson = objectMapper.writeValueAsString(newRecord);
-            stringRedisTemplate.opsForList().rightPush(redisKey, recordJson);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
+        String recordText = "用户：" + message + "\n助手：" + answer;
+        stringRedisTemplate.opsForList().rightPush(redisKey, recordText);
+
+        Long size = stringRedisTemplate.opsForList().size(redisKey);
+        if (size != null && size > 3) {
+            stringRedisTemplate.opsForList().trim(redisKey, size - 3, size - 1);
         }
 
         return new ChatResponseVO(message, answer);
@@ -82,13 +70,13 @@ public class ChatServiceImpl implements ChatService {
             conn.setRequestProperty("Authorization", "Bearer " + apiKey);
             conn.setDoOutput(true);
 
-            com.fasterxml.jackson.databind.node.ObjectNode rootNode = objectMapper.createObjectNode();
+            ObjectNode rootNode = objectMapper.createObjectNode();
             rootNode.put("model", "qwen-turbo");
 
-            com.fasterxml.jackson.databind.node.ObjectNode inputNode = objectMapper.createObjectNode();
-            com.fasterxml.jackson.databind.node.ArrayNode messagesArray = objectMapper.createArrayNode();
+            ObjectNode inputNode = objectMapper.createObjectNode();
+            ArrayNode messagesArray = objectMapper.createArrayNode();
 
-            com.fasterxml.jackson.databind.node.ObjectNode messageNode = objectMapper.createObjectNode();
+            ObjectNode messageNode = objectMapper.createObjectNode();
             messageNode.put("role", "user");
             messageNode.put("content", prompt);
 
